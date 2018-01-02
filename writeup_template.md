@@ -39,8 +39,90 @@ In addition to the above mentioned steps, the main project required the populati
 ### Exercise 1, 2 and 3 pipeline implemented
 #### 1. Complete Exercise 1 steps. Pipeline for filtering and RANSAC plane fitting implemented.
 
-**Statistical Outlier Filter: ** Since most sensor/camera readings are noisy, we first implement a __Statistial Outlier Filter__ to remove the majority of the noise from the readings
+**1. Statistical Outlier Filter:** Since most sensor/camera readings are noisy, we first implement a __Statistial Outlier Filter__ to remove the majority of the noise from the readings. 
 
+```python
+    ###################################################
+    # TODO: Statistical Outlier Filtering
+    ###################################################
+    # Much like the previous filters, we start by creating a filter object: 
+    outlier_filter = cloud_pcl.make_statistical_outlier_filter()
+
+    # Set the number of neighboring points to analyze for any given point
+    outlier_filter.set_mean_k(100)
+
+    # Set threshold scale factor
+    x = 0.0006
+
+    # Any point with a mean distance larger than global (mean distance+x*std_dev) will be considered outlier
+    outlier_filter.set_std_dev_mul_thresh(x)
+
+    # Finally call the filter function for magic
+    pcl_cloud_filtered = outlier_filter.filter()
+```
+
+**2. Voxel Grid Downsampling:** Next, a __Voxel Grid__ filter is applied to the frame with reduced noise, to decrease the amount of points to process, since the redundancy of points/data does not contribute to the recognition process, since we can downsample and still keep the most important of features.
+
+```python
+    ###################################################
+    # TODO: Voxel Grid Downsampling
+    ###################################################
+    
+    vox = cloud_pcl.make_voxel_grid_filter()
+    
+    LEAF_SIZE = 0.006 # 0.005
+    
+    vox.set_leaf_size(LEAF_SIZE, LEAF_SIZE, LEAF_SIZE)
+    
+    voxed = vox.filter()
+```
+
+**3. Passthough Filter:** Such filters are used to basically __crop__ the scene and completely remove insignificant data. In our case we apply this type of filter twice, one in the `z` axis and one in the `x` axis.
+
+```python
+    ###################################################
+    # TODO: PassThrough Filter
+    ###################################################
+    passthrough = voxed.make_passthrough_filter()
+    filter_axis = 'z'
+    passthrough.set_filter_field_name(filter_axis)
+    axis_min = 0.5
+    axis_max = 1.1
+    passthrough.set_filter_limits(axis_min, axis_max)
+    passthroughed_1 = passthrough.filter()
+
+    # TODO: PassThrough Filter "X"
+    passthrough_2 = passthroughed_1.make_passthrough_filter()
+    filter_axis_2 = 'x'
+    passthrough_2.set_filter_field_name(filter_axis_2)
+    axis_min_2 = 0.4
+    axis_max_2 = 0.8
+    passthrough_2.set_filter_limits(axis_min_2, axis_max_2)
+  passthroughed = passthrough_2.filter()
+```
+**4. RANSAC Plane Segmentation:** This segmentation algorithm finds points in the cloud that satisfy specific mathematical relations, in this case, points that belong to a plane.
+__Once a model is established, the remaining points in the point cloud are tested against the resulting candidate shape to determine how many of the points are well approximated by the model. After a certain number of iterations, the shape that possesses the largest percentage of inliers is extracted and the algorithm continues to process the remaining data.__
+
+```python
+    ###################################################
+    # TODO: RANSAC Plane Segmentation
+    ###################################################
+    seg = passthroughed.make_segmenter()
+    seg.set_model_type(pcl.SACMODEL_PLANE)
+    seg.set_method_type(pcl.SAC_RANSAC)
+    max_distance = 0.01
+    seg.set_distance_threshold(max_distance)
+    inliers, coefficients = seg.segment()
+```
+The points are then extracted from the filtered frames, which correspond to the objects and table.
+
+```python
+    ###################################################
+    # TODO: Extract inliers and outliers
+    ###################################################
+    extracted_inliers = passthroughed.extract(inliers, negative = False)
+    extracted_outliers = passthroughed.extract(inliers, negative = True)
+```
 #### 2. Complete Exercise 2 steps: Pipeline including clustering for segmentation implemented.  
 
 #### 2. Complete Exercise 3 Steps.  Features extracted and SVM trained.  Object recognition implemented.
