@@ -32,10 +32,14 @@
 
 #### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  
 
-You're reading it!
+In order to correctly identify the objects on the top of the table, so the robot could pick and place them, a perception pipeline was to be created that consists of Filtering, Segmentation, Clustering, and a simple supervised learning algorithm to train a model to recognize the different objects based on their features which comprise of their respective color histogram, in addition to their surface normal histogram.
+Prior to the implementation of the project, three exercises provided in the lectures introduced insight to the most of those different aspects of the pipleline, and were implemented incrementally to finally end up with a script that could identify the objects and publish their labels in RViz.
+In addition to the above mentioned steps, the main project required the population of a function called `pr_mover()` that would be called after perception pipleline, that would send a service request populated with computed object location, which of the robot's arms would be used, in which bin the object should be dropped, among other information, in order for the robot to pick them up and place them in their respective dropboxes. Each of the steps is discussed in-depth in the following questions.
 
 ### Exercise 1, 2 and 3 pipeline implemented
 #### 1. Complete Exercise 1 steps. Pipeline for filtering and RANSAC plane fitting implemented.
+
+**Statistical Outlier Filter: ** Since most sensor/camera readings are noisy, we first implement a __Statistial Outlier Filter__ to remove the majority of the noise from the readings
 
 #### 2. Complete Exercise 2 steps: Pipeline including clustering for segmentation implemented.  
 
