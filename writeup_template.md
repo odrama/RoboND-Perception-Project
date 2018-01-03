@@ -253,10 +253,15 @@ Camera Perspective:
 
 #### 1. For all three tabletop setups (`test*.world`), perform object recognition, then read in respective pick list (`pick_list_*.yaml`). Next construct the messages that would comprise a valid `PickPlace` request output them to `.yaml` format.
 
-And here's another image! 
-![demo-2](https://user-images.githubusercontent.com/20687560/28748286-9f65680e-7468-11e7-83dc-f1a32380b89c.png)
+Classifier accuracy increase was achieved by:
+- Increasing number of random poses captured and their respective features (More data!)
+- Changing classifier kernel to `sigmoid`
 
-Spend some time at the end to discuss your code, what techniques you used, what worked and why, where the implementation might fail and how you might improve it if you were going to pursue this project further.  
+- Filter parameter tuning should be adjusted a little bit more for robustness
+
+- Collision avoidance should be implemented in order to avoid hitting other objects while picking
+
+- Gripping time should be increased (or strengthened?) since most objects slip through
 
 
 
