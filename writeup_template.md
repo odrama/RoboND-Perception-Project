@@ -6,6 +6,7 @@
 [image6]: ./table.png
 [image7]: ./objects.png
 [image8]: ./camera.png
+[image9]: ./camera_cropped.png
 
 
 ## Project: Perception Pick & Place
@@ -243,9 +244,10 @@ Now that we have isolated our objects of interest from the rest of the scene/dat
 
 We then publish these detected objects for Rviz to display above each respective object. In addition, we pass the list of detected objects to the `pr2_mover()` function as an argument.
 
+Camera Perspective:
 
 
-![camera][image8]
+![camera_cropped][image9]
 
 ### Pick and Place Setup
 
