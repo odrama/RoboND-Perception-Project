@@ -1,4 +1,12 @@
 [image1]: ./confusion_matrix.png
+[image2]: ./stats_filter.png
+[image3]: ./vox.png
+[image4]: ./passthrough.png
+[image5]: ./cluster.png
+[image6]: ./table.png
+[image7]: ./objects.png
+[image8]: ./camera.png
+
 
 ## Project: Perception Pick & Place
 ### Writeup Template: You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
@@ -36,7 +44,7 @@
 
 In order to correctly identify the objects on the top of the table, so the robot could pick and place them, a perception pipeline was to be created that consists of Filtering, Segmentation, Clustering, and a simple supervised learning algorithm to train a model to recognize the different objects based on their features which comprise of their respective color histogram, in addition to their surface normal histogram.
 Prior to the implementation of the project, three exercises provided in the lectures introduced insight to the most of those different aspects of the pipleline, and were implemented incrementally to finally end up with a script that could identify the objects and publish their labels in RViz.
-In addition to the above mentioned steps, the main project required the population of a function called `pr_mover()` that would be called after perception pipleline, that would send a service request populated with computed object location, which of the robot's arms would be used, in which bin the object should be dropped, among other information, in order for the robot to pick them up and place them in their respective dropboxes. Each of the steps is discussed in-depth in the following questions.
+In addition to the above mentioned steps, the main project required the population of a function called `pr2_mover()` that would be called after perception pipleline, that would send a service request populated with computed object location, which of the robot's arms would be used, in which bin the object should be dropped, among other information, in order for the robot to pick them up and place them in their respective dropboxes. Each of the steps is discussed in-depth in the following questions.
 
 ### Exercise 1, 2 and 3 pipeline implemented
 #### 1. Complete Exercise 1 steps. Pipeline for filtering and RANSAC plane fitting implemented.
@@ -63,6 +71,8 @@ In addition to the above mentioned steps, the main project required the populati
     pcl_cloud_filtered = outlier_filter.filter()
 ```
 
+![stats_filter][image2]
+
 **2. Voxel Grid Downsampling:** Next, a __Voxel Grid__ filter is applied to the frame with reduced noise, to decrease the amount of points to process, since the redundancy of points/data does not contribute to the recognition process, since we can downsample and still keep the most important of features.
 
 ```python
@@ -78,6 +88,8 @@ In addition to the above mentioned steps, the main project required the populati
     
     voxed = vox.filter()
 ```
+
+![vox][image3]
 
 **3. Passthough Filter:** Such filters are used to basically __crop__ the scene and completely remove insignificant data. In our case we apply this type of filter twice, one in the `z` axis and one in the `x` axis.
 
@@ -102,6 +114,10 @@ In addition to the above mentioned steps, the main project required the populati
     passthrough_2.set_filter_limits(axis_min_2, axis_max_2)
   passthroughed = passthrough_2.filter()
 ```
+
+
+![passthrough][image4]
+
 **4. RANSAC Plane Segmentation:** This segmentation algorithm finds points in the cloud that satisfy specific mathematical relations, in this case, points that belong to a plane.
 __Once a model is established, the remaining points in the point cloud are tested against the resulting candidate shape to determine how many of the points are well approximated by the model. After a certain number of iterations, the shape that possesses the largest percentage of inliers is extracted and the algorithm continues to process the remaining data.__
 
@@ -125,6 +141,12 @@ The points are then extracted from the filtered frames, which correspond to the 
     extracted_inliers = passthroughed.extract(inliers, negative = False)
     extracted_outliers = passthroughed.extract(inliers, negative = True)
 ```
+
+
+![table][image6]
+
+![objects][image7]
+
 #### 2. Complete Exercise 2 steps: Pipeline including clustering for segmentation implemented.  
 
 Clustering is used to, as the name suggests, __cluster__ data points that are within a certain distance of each other, to define points belonging to an object. The code snippet is taken from the lessons, along with the visualization part. Several techniques like **DBSCAN** and **K-MEANS** searching algorithms were introduced in the lessons, and we stuck with the **K-MEANS** technique.
@@ -177,6 +199,11 @@ Clustering is used to, as the name suggests, __cluster__ data points that are wi
     ros_cluster_cloud = pcl_to_ros(cluster_cloud)
     pcl_cluster_pub.publish(ros_cluster_cloud)
 ```
+
+
+
+![cluster][image5]
+
 #### 3. Complete Exercise 3 Steps.  Features extracted and SVM trained.  Object recognition implemented.
 
 In this scenario, we know what the objects we are going to find are, and so, we can start extracting their features. We choose to extract __color histogram__ features along with __surface normals__ features, as those contain description about the object's color and one of its geometrical features, using `capture_features.py` script, which creates every object specified in the `object_list` a specified number of times in randem poses in front of the RGB-D camera. In my case, i chose the number of random orientations to be 25 so that i make sure that each object is captured from as many angles as possible so as to increase the robutness of the detection later on.
@@ -214,8 +241,11 @@ Now that we have isolated our objects of interest from the rest of the scene/dat
         detected_objects_labels.append(label)
 ```
 
-We then publish these detected objects for Rviz to display above each respective object. In addition, we pass the list of detected objects to the `pr_mover()` function.
+We then publish these detected objects for Rviz to display above each respective object. In addition, we pass the list of detected objects to the `pr2_mover()` function as an argument.
 
+
+
+![camera][image8]
 
 ### Pick and Place Setup
 
