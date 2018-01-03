@@ -1,3 +1,5 @@
+[image1] ./confusion_matrix.png
+
 ## Project: Perception Pick & Place
 ### Writeup Template: You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
 
@@ -177,9 +179,43 @@ Clustering is used to, as the name suggests, __cluster__ data points that are wi
 ```
 #### 3. Complete Exercise 3 Steps.  Features extracted and SVM trained.  Object recognition implemented.
 
+In this scenario, we know what the objects we are going to find are, and so, we can start extracting their features. We choose to extract __color histogram__ features along with __surface normals__ features, as those contain description about the object's color and one of its geometrical features, using `capture_features.py` script, which creates every object specified in the `object_list` a specified number of times in randem poses in front of the RGB-D camera. In my case, i chose the number of random orientations to be 25 so that i make sure that each object is captured from as many angles as possible so as to increase the robutness of the detection later on.
+After we capture the features we mentioned above, we use a supervised learning algorthim (Support Vector Machines) to train a classifer to recognize the objects based on their features and their respective labels. I changed the default kernel to `sigmoid` and increased the cross-validation to `8` folds instead of 5, which resulted in very robust results with accuracy reaching `97%`.
+
+```python
+# Create classifier
+clf = svm.SVC(kernel = 'sigmoid')
+
+# Set up 5-fold cross-validation
+kf = cross_validation.KFold(len(X_train),
+                            n_folds=8, # 5
+                            shuffle=True,
+                            random_state=1)
+```
 
 
-![demo-1](https://user-images.githubusercontent.com/20687560/28748231-46b5b912-7467-11e7-8778-3095172b7b19.png)
+![confusion_matrix][image1]
+
+
+Now that we have isolated our objects of interest from the rest of the scene/data using the above mentioned pipeline, we can extract the features of those clusters, load our saved model, and perform classification.
+
+```python
+        # Compute the associated feature vector
+        hsv_hist = compute_color_histograms(ros_cluster, using_hsv=True)
+        normals = get_normals(ros_cluster)
+        normals_hist = compute_normal_histograms(normals)
+        feature = np.concatenate((hsv_hist, normals_hist))
+ 
+        
+        # Make the prediction, retrieve the label for the result
+        # and add it to detected_objects_labels list
+        prediction = clf.predict(scaler.transform(feature.reshape(1,-1)))
+        label = encoder.inverse_transform(prediction)[0]
+        detected_objects_labels.append(label)
+```
+
+We then publish these detected objects for Rviz to display above each respective object. In addition, we pass the list of detected objects to the `pr_mover()` function.
+
 
 ### Pick and Place Setup
 
